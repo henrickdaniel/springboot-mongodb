@@ -1,6 +1,7 @@
 package com.example.demo.repository;
 
 import com.example.demo.model.Student;
+import com.example.demo.model.SubjectCount;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
@@ -29,5 +30,9 @@ public interface StudentRepository extends MongoRepository<Student, String> {
 
     @Query("select * from student where nome like ?1 and mark < ?2")
     List<Student> searchWithSQL(String name, Integer mark);
+
+    @Aggregation(pipeline = "{$group: {_id: '$subject', count: {$sum: 1}}}")
+    List<SubjectCount> countSubject();
+
 
 }

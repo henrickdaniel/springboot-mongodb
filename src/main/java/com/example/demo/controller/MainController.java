@@ -1,8 +1,11 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.MockRequestDto;
+import com.example.demo.model.NameDto;
 import com.example.demo.model.Student;
+import com.example.demo.model.SubjectCount;
 import com.example.demo.repository.StudentRepository;
+import com.example.demo.repository.StudentRepositoryMongoTemplate;
 import com.github.javafaker.Faker;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -18,7 +22,8 @@ import java.util.NoSuchElementException;
 @AllArgsConstructor
 public class MainController {
 
-    private StudentRepository studentRepository;
+    private final StudentRepository studentRepository;
+    private final StudentRepositoryMongoTemplate mongoTemplate;
 
     @PostMapping("/addStudent")
     public void addStudent(@RequestBody Student student){
@@ -78,9 +83,16 @@ public class MainController {
             student.setName(faker.funnyName().name());
             student.setAddress("Address " + faker.address().fullAddress());
             student.setMark(faker.number().numberBetween(0, 100));
+            student.setSubject(getSubject());
             studentRepository.save(student);
         }
 
+    }
+
+    private String getSubject(){
+        Faker faker = new Faker();
+        List<String> lista = Arrays.asList(new String[]{"Mathematics", "Physics", "Chemistry", "Biology", "History", "Geography", "English"});
+        return lista.get(faker.number().numberBetween(0, lista.size() -1 ));
     }
 
     @GetMapping("/json/{name}/{mark}")
@@ -100,5 +112,18 @@ public class MainController {
     public ResponseEntity<List<Student>> findByName(@PathVariable String name){
         log.info("Searching for name {}", name);
         return new ResponseEntity<>(studentRepository.findByNameStartingWith(name), HttpStatus.OK);
+    }
+
+    @GetMapping("/{name}")
+    public ResponseEntity<List<NameDto>> findAll(@PathVariable String name){
+        return new ResponseEntity<>(mongoTemplate.find(name), HttpStatus.OK);
+    }
+
+    @GetMapping("/")
+    public ResponseEntity<List<SubjectCount>> countSubject(){
+        log.info("Counting subjects");
+        List<SubjectCount> list = studentRepository.countSubject();
+        log.info("List with {} students", list.size());
+        return new ResponseEntity<>(list, HttpStatus.OK);
     }
 }
