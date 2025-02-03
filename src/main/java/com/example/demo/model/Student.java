@@ -3,8 +3,11 @@ package com.example.demo.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.MongoId;
+
+import java.util.List;
 
 @Document
 @Data
@@ -17,5 +20,9 @@ public class Student {
     private String name;
     private String address;
     private Integer mark;
-    private String subject;
+    private List<String> subject;
+
+    @DBRef
+    private LegalRepresentative legalRepresentative;
+
 }

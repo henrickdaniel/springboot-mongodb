@@ -1,21 +1,17 @@
 package com.example.demo.controller;
 
-import com.example.demo.model.MockRequestDto;
-import com.example.demo.model.NameDto;
-import com.example.demo.model.Student;
-import com.example.demo.model.SubjectCount;
+import com.example.demo.model.*;
+import com.example.demo.repository.LegalRepresentativeRepository;
 import com.example.demo.repository.StudentRepository;
 import com.example.demo.repository.StudentRepositoryMongoTemplate;
-import com.github.javafaker.Faker;
+import com.example.demo.service.StudentService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 @RestController
 @Slf4j
@@ -24,6 +20,8 @@ public class MainController {
 
     private final StudentRepository studentRepository;
     private final StudentRepositoryMongoTemplate mongoTemplate;
+    private final LegalRepresentativeRepository legalRepresentativeRepository;
+    private final StudentService studentService;
 
     @PostMapping("/addStudent")
     public void addStudent(@RequestBody Student student){
@@ -75,24 +73,7 @@ public class MainController {
     @PostMapping("/generateStudents")
     public void generateStudents(@RequestBody MockRequestDto mockRequestDto) {
         log.info("Generating students");
-
-        Faker faker = Faker.instance();
-
-        for (int i = 0; i < mockRequestDto.getNumberOfNewStudents(); i++) {
-            Student student = new Student();
-            student.setName(faker.funnyName().name());
-            student.setAddress("Address " + faker.address().fullAddress());
-            student.setMark(faker.number().numberBetween(0, 100));
-            student.setSubject(getSubject());
-            studentRepository.save(student);
-        }
-
-    }
-
-    private String getSubject(){
-        Faker faker = new Faker();
-        List<String> lista = Arrays.asList(new String[]{"Mathematics", "Physics", "Chemistry", "Biology", "History", "Geography", "English"});
-        return lista.get(faker.number().numberBetween(0, lista.size() -1 ));
+        studentService.generateStudents(mockRequestDto);
     }
 
     @GetMapping("/json/{name}/{mark}")
@@ -125,5 +106,39 @@ public class MainController {
         List<SubjectCount> list = studentRepository.countSubject();
         log.info("List with {} students", list.size());
         return new ResponseEntity<>(list, HttpStatus.OK);
+    }
+
+    @GetMapping("/countSubject/{subject}")
+    public ResponseEntity<Long> countSubject(@PathVariable String subject){
+        return new ResponseEntity<>(studentRepository.countSubject(subject), HttpStatus.OK);
+    }
+
+    @GetMapping("/countSubjectCountQuery/{subject}")
+    public ResponseEntity<Long> countSubjectCountQuery(@PathVariable String subject){
+        return new ResponseEntity<>(studentRepository.countSubjectCountQuery(subject), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<String> delete(@PathVariable String id){
+        log.info("Deleting student with id {})", id);
+        studentRepository.deleteQuery(id);
+        return new ResponseEntity<String>(String.format("Deleted student with id %s", id), HttpStatus.OK);
+    }
+
+    @PutMapping("/addSubject")
+    public ResponseEntity<Student> addSubject(@RequestBody PushSubjectDto pushSubjectDto){
+        log.info("Adding subject {} to student with id {}", pushSubjectDto.getSubject(), pushSubjectDto.getId());
+        return new ResponseEntity<>(mongoTemplate.addSubject(pushSubjectDto), HttpStatus.OK);
+    }
+
+    @PutMapping("/deleteSubject")
+    public ResponseEntity<Student> deleteSubject(@RequestBody PushSubjectDto pushSubjectDto){
+        log.info("Deleting subject {} to student with id {}", pushSubjectDto.getSubject(), pushSubjectDto.getId());
+        return new ResponseEntity<>(mongoTemplate.deleteSubject(pushSubjectDto).orElseThrow(() -> new NoSuchElementException("Student not found.")), HttpStatus.OK);
+    }
+
+    @GetMapping("/studentsName")
+    public ResponseEntity<List<StudentNameDto>> getStudentsName(){
+        return new ResponseEntity<>(mongoTemplate.getStudentsName(), HttpStatus.OK);
     }
 }
