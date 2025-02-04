@@ -16,7 +16,7 @@ import java.util.*;
 @RestController
 @Slf4j
 @AllArgsConstructor
-public class MainController {
+public class StudentController {
 
     private final StudentRepository studentRepository;
     private final StudentRepositoryMongoTemplate mongoTemplate;
@@ -141,4 +141,5 @@ public class MainController {
     public ResponseEntity<List<StudentNameDto>> getStudentsName(){
         return new ResponseEntity<>(mongoTemplate.getStudentsName(), HttpStatus.OK);
     }
+
 }
