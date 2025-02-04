@@ -5,16 +5,20 @@ import com.example.demo.repository.MongoClientInstance;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
+import lombok.AllArgsConstructor;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
+@AllArgsConstructor
 @Component
 public class MovieRepository {
 
+    private final MongoClientInstance mongoClientInstance;
+
     public List<Movie> showMovies() {
-        MongoClient mongoClient = MongoClientInstance.getMongoClient();
+        MongoClient mongoClient = mongoClientInstance.getMongoClient();
 
         FindIterable<Document> movies = getCollection(mongoClient).find();
         List<Document> documents = StreamSupport.stream(movies.spliterator(), false).toList();
